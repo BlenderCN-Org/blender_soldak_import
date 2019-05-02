@@ -88,11 +88,7 @@ def read_weight(file):
 
 def load(operator,
          context,
-         filepath="",
-         constrain_size=0.0,
-         use_image_search=True,
-         use_apply_transform=True,
-         global_matrix=None,
+         filepath=""
          ):
 
     print("importing MDM: %r..." % (filepath), end="")
