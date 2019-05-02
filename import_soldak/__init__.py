@@ -36,6 +36,13 @@ if "bpy" in locals():
         importlib.reload(import_mdm)
 '''
 
+# When bpy is already in local, we know this is not the initial import...
+# (Supports reloading the addon with F8 while blender is running)
+if "bpy" in locals():
+    # ...so we need to reload our submodule(s) using importlib
+    import importlib
+    if "import_soldak" in locals():
+        importlib.reload(import_soldak)
 
 import bpy
 from bpy.props import (
@@ -55,16 +62,14 @@ from bpy_extras.io_utils import (
 
 class ImportSoldak(bpy.types.Operator):
     """Import from Soldak file format (.mdm)"""
-    bl_idname = "import_scene.soldak"
+    bl_idname = "import_mesh.soldak"
     bl_label = 'Import Soldak'
     bl_options = {'UNDO'}
 
     filename_ext = ".mdm"
 
-    if not self.filepath:
-        raise Exception("filepath not set")
-
     filter_glob = StringProperty(default="*.mdm", options={'HIDDEN'})
+    filepath = StringProperty(options={'HIDDEN'})
 
     def execute(self, context):
         from . import import_mdm

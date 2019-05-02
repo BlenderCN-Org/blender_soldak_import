@@ -105,11 +105,9 @@ def load(operator,
             file.close()
             return
 
-        #context.scene.update()
-
         # Create a new mesh (not editable)
         mesh = bpy.data.meshes.new("mesh")
-        obj = bpy.data.objects.new(name)
+        obj = bpy.data.objects.new("Foo", mesh)
 
         scene = context.scene
         scene.objects.link(obj)
@@ -128,10 +126,10 @@ def load(operator,
             vertices.append(bm.verts.new(weight.vertOffset))
 
         # Add the triangles
-        file.seek(header.triOffset)
+        file.seek(header.trisOffset)
         for _ in range(header.numTris):
             tri = read_tri(file)
-            bm.faces.new(vertices[tri[0]], vertices[tri[1]], vertices[tri[2]])
+            bm.faces.new([vertices[tri[0]], vertices[tri[1]], vertices[tri[2]]])
 
         # Convert back to mesh
         bm.to_mesh(mesh)
