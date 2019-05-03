@@ -49,16 +49,16 @@ def read_vert(file):
     v = Vert(data[0], data[1], (data[2], data[3], data[4]), (data[5], data[6], data[7], data[8]), data[9], data[10])
     return v
 
-WEIGHT_FORMAT = '<i' + ('f' * 4)
-WEIGHT_SIZE = struct.calcsize(WEIGHT_FORMAT)
+VERTBONE_FORMAT = '<i' + ('f' * 4)
+VERTBONE_SIZE = struct.calcsize(VERTBONE_FORMAT)
 
-Weight = namedtuple('Weight', ['boneIndex', 'vertOffset', 'boneWeight'])
+VertBone = namedtuple('VertBone', ['boneIndex', 'vertOffset', 'boneWeight'])
 
-def read_weight(file):
-    str = file.read(WEIGHT_SIZE)
-    data = struct.unpack(WEIGHT_FORMAT, str)
-    w = Weight(data[0], (data[1], data[2], data[3]), data[4])
-    return w
+def read_vertbone(file):
+    str = file.read(VERTBONE_SIZE)
+    data = struct.unpack(VERTBONE_FORMAT, str)
+    vb = VertBone(data[0], (data[1], data[2], data[3]), data[4])
+    return vb
 
 # Loader -----
 
@@ -98,8 +98,9 @@ def load(operator,
         file.seek(header.weightsOffset)
         vertices = []
         for _ in range(header.numVerts):
-            weight = read_weight(file)
-            vertices.append(bm.verts.new(weight.vertOffset))
+            vb = read_vertbone(file)
+            v = bm.verts.new(vb.vertOffset))
+            vertices.append(v)
 
         # Add the triangles
         file.seek(header.trisOffset)
@@ -139,6 +140,6 @@ if __name__ == '__main__':
             print("Vertice ", vert_num, " :", vert)
 
         f.seek(header.weightsOffset)
-        for weight_num in range(header.numVerts):
-            weight = read_weight(f)
-            print("Weight ", weight_num, " :", weight)
+        for vb_num in range(header.numVerts):
+            vb = read_verbone(f)
+            print("VertBone ", vb_num, " :", vb)
