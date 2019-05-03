@@ -94,12 +94,19 @@ def load(operator,
         mesh = context.object.data
         bm = bmesh.new()
 
+        # Read all vertex data into memory
+        file.seek(header.vertsOffset)
+        vert_data = []
+        for _ in range(header.numVerts):
+            vert_data.append(read_vert(file))
+
         # Add the vertices
         file.seek(header.weightsOffset)
         vertices = []
-        for _ in range(header.numVerts):
-            vb = read_vertbone(file)
-            v = bm.verts.new(vb.vertOffset))
+        for i in range(header.numVerts):
+            vb_data = read_vertbone(file)
+            v = bm.verts.new(vb_data.vertOffset))
+            v.normal = mathutils.Vector(vert_data[i].normal)
             vertices.append(v)
 
         # Add the triangles
