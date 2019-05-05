@@ -1,4 +1,4 @@
-# MDM Format ----
+# MDM Format
 
 import struct
 from collections import namedtuple
@@ -51,3 +51,36 @@ def read_vertbone(file):
     data = struct.unpack(VERTBONE_FORMAT, str)
     vb = VertBone(data[0], (data[1], data[2], data[3]), data[4])
     return vb
+
+if __name__ == '__main__':
+    filename = sys.argv[1]
+    with open(filename + '.mdm', 'rb') as f:
+        header = read_header(f)
+        print("Header: ", header)
+        print("vertsOffset: {:x}".format(header.vertsOffset))
+
+        f.seek(header.surfaceOffset)
+        for surf_num in range(header.numSurfaces):
+            surface = read_surface(f)
+            print("Surface ", surf_num, " :", surface)
+
+        tris = {}
+
+        f.seek(header.trisOffset)
+        for i in range(header.numTris):
+            tri = read_tri(f)
+            if tri in tris:
+                print("Tri {} matches tri {}!!!".format(i, tris[tri]))
+            tris[tri] = i
+            print("Tri ", i, " :", tri)
+
+        # Vertices ---
+        f.seek(header.vertsOffset)
+        for vert_num in range(header.numVerts):
+            vert = read_vert(f)
+            print("Vertice ", vert_num, " :", vert)
+
+        f.seek(header.weightsOffset)
+        for vb_num in range(header.numVerts):
+            vb = read_vertbone(f)
+            print("VertBone ", vb_num, " :", vb)
