@@ -1,0 +1,114 @@
+
+- 0x0000803f = 1.0, 0x000080BF = -1, 0x00000080 = -0.0
+- 1st objective: image viewer that can display ctx files
+	- ctx format:
+	x, y, num, num, data
+- 2nd objective: model viewer that can display models, skeletons
+	Model file format (mdm)
+	Mdm format:
+
+	int32 identifier
+	int32 version;
+	int32 numSurfaces
+	int32 numTris
+	int32 numVerts
+	int32 surfacesOffset
+	int32 trisOffset
+	int32 vertsOffset
+	int32 weightsOffset
+	int32 collapseMappingsOffset
+
+	For all of the surfaces:
+
+	int32 surfaceNumber
+	int32 numVerts
+	int32 numTris
+	int32 vertsOffset
+	int32 trisOffset
+	int32 collapseMappingsOffset
+
+	For all of the tris:
+
+	int32 vertIndexes[ 3 ]
+
+	For all of the verts:
+
+	float32 u
+	float32 v
+	Vector3 normal
+	int32 numBones
+	int32 firstBone
+
+	For all of the vert/bone info
+
+	int32 boneIndex
+	Vector3 vertOffset
+	float32 boneWeight
+
+	Collapse mappings for each surface (these are the order to lose verts in the poly reduction stuff)
+
+	int32 vertIndex:
+	- header: 12121212, x, y, num_of_polygons, num_points,   
+		section 1 offset: unknown (always 0x24)
+		section 2 offset: polygons (always 0x38)
+		section 3 offset: point info (lots of floats)
+		section 4 offset: points
+		sec 5 offset (optional): unknown
+		0
+	- sections: 
+		1. unknown: (bones?)
+			so far, only contains 
+			0, num_points, num_polys, section 3 offset, sec 2 offset
+		2. polygons
+			- form triangles, sometimes from both sides
+			e.g.  2 1 0 1 3 0 2 0 1 0 3 1
+			0    3
+			2    1
+		3. floats (uv?)
+			7 values per point:
+			u, v
+			3 values (normal)
+			1 or 2
+			increasing num (seems like a waste)
+				- if 2 before, increases by 2 (2 points?)
+		4. points
+			int num: vertex belongs to this bone
+				- Determines position of the points
+			3 floats (x,y,z)
+			float (0000803F=1 but can be different values)
+				- probably vertex weight
+				- multiply to figure out final position of vertex
+		5. (optional) 
+			word per point
+	Skeleton file format (MDS):
+		12121212 x, y, FFFFFFFF,  
+		(offset of name, number) list
+		- the number is used to connect to the previous number. If two things have the same number, they both connect to the same previous number
+- 3rd: animation viewer
+	- mda file format:
+	- header: 12121212, 02, num_frames, num_items_per_frame 
+		1st_sec_offset
+		2nd_sec_offset
+		3rd_sec_offset
+	- 1. position of individual bones
+		7 words per frame x num_items_per_frame 1-7
+		1-4 quaternion:
+		5: z-displacement (up). 0 to about 100
+		6: y-displacement (in). positive is in.
+		7: x-displacement (left/right) positive is left?
+	- 2. unknown
+		zeros
+	- 3. general position of whole item
+		7 words per frame
+
+	[Save file format]
+	Items: name of item-Quality e.g. GreavesCloth5-Ragged
+		- All items (including magical) have quality
+		- Followed by 9 bytes that start with 00 01
+		- Then modifier names
+			- 5 bytes between modifier names
+		- 50 bytes between items
+		- 55 bytes after unique item?
+	Log: saved in char file with references to $$text entries
+	- Then seems to save all objects encountered, monsters, obelisks etc
+		- Each object is followed by a flag
