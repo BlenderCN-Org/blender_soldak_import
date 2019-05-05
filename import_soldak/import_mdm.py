@@ -105,7 +105,7 @@ def load(operator,
         vertices = []
         for i in range(header.numVerts):
             vb_data = read_vertbone(file)
-            v = bm.verts.new(vb_data.vertOffset))
+            v = bm.verts.new(vb_data.vertOffset)
             v.normal = mathutils.Vector(vert_data[i].normal)
             vertices.append(v)
 
