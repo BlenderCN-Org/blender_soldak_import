@@ -81,43 +81,64 @@ def load(operator,
             file.close()
             return
 
-        # Create a new mesh (not editable)
-        mesh = bpy.data.meshes.new("mesh")
-        obj = bpy.data.objects.new("Foo", mesh)
-
         scene = context.scene
-        scene.objects.link(obj)
+
+        # Load all surfaces
+        surface_data = []
+        file.seek(header.surfaceOffset)
+        for s in range(header.numSurfaces):
+            surface_data.append(read_surface(file))
+
+        # Create start offset into vertices so we can look up vertBones
+        surface_startVerts = []
+        total = 0
+        for s in surface_data:
+            surface_startVerts.append(total)
+            total += s.numVerts
+
+        # Read all vertBone data into memory
+        file.seek(header.weightsOffset)
+        vertbone_data = []
+        for _ in range(header.numVerts):
+            vertbone_data.append(read_vertbone(file))
+
+        # Loop over all surfaces
+        for surf_num, surface in enumerate(surface_data[:1]):
+
+            # Create a new mesh (not editable)
+            mesh = bpy.data.meshes.new("mesh" + str(surf_num))
+            obj = bpy.data.objects.new("Foo" + str(surf_num), mesh)
+            scene.objects.link(obj)
+
+            # Make a bmesh (editable) per surface
+            bm = bmesh.new()
+
+            # Add the vertices
+            file.seek(surface.vertsOffset)
+            vertices = [] # these are blender objects
+            st = surface_startVerts[surf_num]
+            # Match vertbones to vertices
+            for vb_data in vertbone_data[st : st + surface.numVerts]:
+                vert_data = read_vert(file)
+                v = bm.verts.new(vb_data.vertOffset)
+                v.normal = mathutils.Vector(vert_data.normal)
+                vertices.append(v)
+
+            # Add the triangles
+            file.seek(surface.trisOffset)
+            for _ in range(surface.numTris):
+                tri = read_tri(file)
+                bm.faces.new([vertices[i] for i in tri])
+                #bm.faces.new([vertices[tri[0]], vertices[tri[1]], vertices[tri[2]]])
+
+            # Convert back to mesh
+            # mesh = context.object.data
+            mesh = obj.data
+            bm.to_mesh(mesh)
+            bm.free()
+
         scene.objects.active = obj
         obj.select = True
-
-        # Make a bmesh (editable)
-        mesh = context.object.data
-        bm = bmesh.new()
-
-        # Read all vertex data into memory
-        file.seek(header.vertsOffset)
-        vert_data = []
-        for _ in range(header.numVerts):
-            vert_data.append(read_vert(file))
-
-        # Add the vertices
-        file.seek(header.weightsOffset)
-        vertices = []
-        for i in range(header.numVerts):
-            vb_data = read_vertbone(file)
-            v = bm.verts.new(vb_data.vertOffset)
-            v.normal = mathutils.Vector(vert_data[i].normal)
-            vertices.append(v)
-
-        # Add the triangles
-        file.seek(header.trisOffset)
-        for _ in range(header.numTris):
-            tri = read_tri(file)
-            bm.faces.new([vertices[tri[0]], vertices[tri[1]], vertices[tri[2]]])
-
-        # Convert back to mesh
-        bm.to_mesh(mesh)
-        bm.free()
 
         print(" done in %.4f sec." % (time.clock() - time1))
 
@@ -135,10 +156,15 @@ if __name__ == '__main__':
             surface = read_surface(f)
             print("Surface ", surf_num, " :", surface)
 
+        tris = {}
+
         f.seek(header.trisOffset)
-        for tri_num in range(header.numTris):
+        for i in range(header.numTris):
             tri = read_tri(f)
-            print("Tri ", tri_num, " :", tri)
+            if tri in tris:
+                print("Tri {} matches tri {}!!!".format(i, tris[tri]))
+            tris[tri] = i
+            print("Tri ", i, " :", tri)
 
         # Vertices ---
         f.seek(header.vertsOffset)
@@ -148,5 +174,5 @@ if __name__ == '__main__':
 
         f.seek(header.weightsOffset)
         for vb_num in range(header.numVerts):
-            vb = read_verbone(f)
+            vb = read_vertbone(f)
             print("VertBone ", vb_num, " :", vb)
