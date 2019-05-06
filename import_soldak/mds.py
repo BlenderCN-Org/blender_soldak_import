@@ -49,5 +49,8 @@ if __name__ == '__main__':
     filename = sys.argv[1]
     file_len = os.stat(filename + '.mds').st_size
     with open(filename + '.mds', 'rb') as f:
-        read_bones(f)
+        data = read_bones(f)
+    print("Num bones: ", len(data), " Bones: ", data)
+
+
 

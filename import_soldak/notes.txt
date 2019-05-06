@@ -96,7 +96,7 @@
 		5: z-displacement (up). 0 to about 100
 		6: y-displacement (in). positive is in.
 		7: x-displacement (left/right) positive is left?
-	- 2. unknown
+	- 2. unknown: 3 words per frame
 		zeros
 	- 3. general position of whole item
 		7 words per frame
